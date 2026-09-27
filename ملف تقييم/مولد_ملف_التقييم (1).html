@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مولّد ملف التقييم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1f2422;
+    --paper:#faf7f0;
+    --paper-2:#f1ece0;
+    --line:#d8cfba;
+    --maroon:#8a3324;
+    --maroon-deep:#5f2016;
+    --navy:#1f3a52;
+    --gold:#b8862f;
+    --ok:#2f6b4f;
+    --bad:#a23b2e;
+    --mid:#b8862f;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#ece6d8; --paper:#20211d; --paper-2:#2a2b25; --line:#43443a;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#ece6d8; --paper:#20211d; --paper-2:#2a2b25; --line:#43443a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'Tajawal', system-ui, sans-serif;
+    min-height:100vh;
+  }
+  .app{max-width:1100px;margin:0 auto;padding:28px 20px 80px;}
+  header.top{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
+    border-bottom:3px solid var(--maroon); padding-bottom:16px; margin-bottom:22px; flex-wrap:wrap;
+  }
+  header.top h1{
+    font-size:1.5rem; margin:0 0 4px; color:var(--maroon-deep); font-weight:900;
+  }
+  header.top p{margin:0;color:var(--ink);opacity:.7;font-size:.92rem;}
+  .toolbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  select, button, input[type=text], input[type=date], textarea{
+    font-family:inherit; font-size:.92rem; border-radius:8px; border:1.5px solid var(--line);
+    background:var(--paper); color:var(--ink); padding:8px 10px;
+  }
+  button{
+    cursor:pointer; background:var(--navy); color:#fdfaf3; border-color:var(--navy);
+    font-weight:700; transition:transform .08s ease, opacity .15s ease;
+  }
+  button.secondary{background:transparent;color:var(--navy);border-color:var(--navy);}
+  button.danger{background:transparent;color:var(--bad);border-color:var(--bad);}
+  button.ghost{background:transparent;color:var(--ink);border-color:var(--line);}
+  button:hover{opacity:.85;}
+  button:active{transform:scale(.97);}
+  button:disabled{opacity:.4;cursor:not-allowed;}
+
+  .tabs{display:flex; gap:6px; margin-bottom:20px; border-bottom:1.5px solid var(--line);}
+  .tab{
+    padding:10px 18px; cursor:pointer; font-weight:700; color:var(--ink); opacity:.55;
+    border-bottom:3px solid transparent; user-select:none;
+  }
+  .tab.active{opacity:1; color:var(--maroon-deep); border-bottom-color:var(--maroon);}
+
+  section.card{
+    background:var(--paper-2); border:1.5px solid var(--line); border-radius:14px;
+    padding:20px; margin-bottom:20px;
+  }
+  section.card h2{
+    margin:0 0 14px; font-size:1.05rem; color:var(--maroon-deep); font-weight:900;
+    display:flex; align-items:center; gap:8px;
+  }
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .grid4{display:grid; grid-template-columns:repeat(4,1fr); gap:12px;}
+  @media (max-width:700px){.grid2,.grid4{grid-template-columns:1fr;}}
+  label{display:block; font-size:.82rem; font-weight:700; opacity:.8; margin-bottom:4px;}
+  .field{margin-bottom:12px;}
+  textarea{width:100%; min-height:64px; resize:vertical; line-height:1.6;}
+  input[type=text], input[type=date], select{width:100%;}
+
+  table{width:100%; border-collapse:collapse; font-size:.88rem;}
+  th,td{border:1px solid var(--line); padding:8px; text-align:center; vertical-align:top;}
+  th{background:var(--navy); color:#fdfaf3; font-weight:700;}
+  td textarea{min-height:44px;}
+
+  .crit-row{display:grid; grid-template-columns:40px 1fr 1.4fr 110px 34px; gap:10px; align-items:start; margin-bottom:10px; padding:10px; background:var(--paper); border:1px solid var(--line); border-radius:10px;}
+  .crit-num{font-weight:900; color:var(--maroon); font-size:1.1rem; text-align:center; padding-top:8px;}
+  @media (max-width:800px){.crit-row{grid-template-columns:1fr; }}
+
+  .add-row{background:transparent;border:1.5px dashed var(--line); color:var(--ink); width:100%; padding:10px; margin-top:4px;}
+
+  .student-row{display:grid; grid-template-columns:28px 1fr auto 34px; gap:10px; align-items:center; margin-bottom:8px;}
+  .level-select{width:auto; min-width:150px;}
+  .lvl-0{color:var(--bad); font-weight:700;}
+  .lvl-1{color:#c07a30; font-weight:700;}
+  .lvl-2{color:var(--mid); font-weight:700;}
+  .lvl-3{color:var(--ok); font-weight:700;}
+
+  .iconbtn{width:30px;height:30px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;font-size:1rem;line-height:1;}
+
+  .badge{display:inline-block; padding:2px 9px; border-radius:20px; font-size:.72rem; font-weight:700;}
+  .badge.adna{background:#e9dfc9;color:var(--maroon-deep);}
+  .badge.tamayyuz{background:#e3ecf3;color:var(--navy);}
+
+  .empty{opacity:.6; font-size:.9rem; padding:14px; text-align:center;}
+
+  /* preview */
+  #preview{background:#fff; color:#1a1a1a; padding:34px; border-radius:10px;}
+  #preview h1{text-align:center; color:var(--maroon-deep); font-size:1.4rem; margin-bottom:18px;}
+  #preview .meta-line{margin:4px 0; font-size:.95rem;}
+  #preview .meta-line b{color:var(--maroon-deep);}
+  #preview h3{color:#b5551f; font-size:1.05rem; margin:26px 0 10px; text-align:center;}
+  #preview table{font-size:.82rem;}
+  #preview th{background:#eee0c6; color:#1a1a1a;}
+  #preview ul{margin:4px 0; padding-inline-start:18px;}
+  .sym{font-family:'IBM Plex Mono',monospace; letter-spacing:2px;}
+  .name-cell{font-weight:700; text-align:start;}
+  .concern-list{font-size:.8rem;text-align:start;}
+
+  .print-actions{display:flex; gap:8px; margin-bottom:16px;}
+
+  @media print{
+    body *{visibility:hidden;}
+    #preview, #preview *{visibility:visible;}
+    #preview{position:absolute; inset:0; width:100%; border-radius:0; padding:0;}
+    .print-actions, .toolbar, header.top, .tabs{display:none !important;}
+  }
+
+  .footnote{font-size:.78rem; opacity:.55; margin-top:6px;}
+  .save-banner{
+    position:fixed; bottom:18px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--navy); color:#fff; padding:9px 18px; border-radius:20px; font-size:.85rem;
+    opacity:0; transition:all .25s ease; pointer-events:none; font-weight:700;
+  }
+  .save-banner.show{opacity:1; transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <div>
+      <h1>مولّد ملف التقييم</h1>
+      <p>أدخل المعايير ونتائج التلاميذ، والأداة تُنشئ لك جداول التقييم جاهزة للطباعة.</p>
+    </div>
+    <div class="toolbar">
+      <select id="savedSelect" title="التقييمات المحفوظة"></select>
+      <button class="secondary" id="loadBtn">فتح</button>
+      <button class="danger" id="deleteBtn">حذف</button>
+      <button id="newBtn">+ تقييم جديد</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="edit">الإدخال</div>
+    <div class="tab" data-tab="preview">المعاينة والطباعة</div>
+  </div>
+
+  <div id="editView">
+
+    <section class="card">
+      <h2>بيانات التقييم</h2>
+      <div class="grid4">
+        <div class="field"><label>المادة</label><input type="text" id="m_subject" placeholder="مثال: الرياضيات"></div>
+        <div class="field"><label>المستوى / السنة</label><input type="text" id="m_level" placeholder="مثال: السنة الرابعة"></div>
+        <div class="field"><label>القسم</label><input type="text" id="m_class" placeholder="مثال: 4 أ"></div>
+        <div class="field"><label>التاريخ</label><input type="date" id="m_date"></div>
+      </div>
+      <div class="field"><label>الكفاية المستهدفة</label><textarea id="m_kafaya" placeholder="حلّ وضعيات مشكل دالة لإنماء الاستدلال الرياضي..."></textarea></div>
+      <div class="grid2">
+        <div class="field"><label>مكوّنات الكفاية (سطر لكل عنصر)</label><textarea id="m_mokawwinat" placeholder="بتوظيف العمليات على الأعداد&#10;بالتصرف في المقادير"></textarea></div>
+        <div class="field"><label>الأداء المنتظر (سطر لكل عنصر)</label><textarea id="m_adaa" placeholder="الضرب في عدد ذي رقم واحد&#10;تحويلات في نطاق وحدات قيس الأطوال"></textarea></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>المعايير</h2>
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap;">
+        <label style="margin:0;">قالب جاهز (السنة الرابعة):</label>
+        <select id="presetSelect" style="width:auto; min-width:220px;">
+          <option value="">— اختر مادة —</option>
+        </select>
+        <button class="secondary" id="loadPresetBtn">تحميل القالب</button>
+        <span class="footnote" style="margin:0;">يعبّئ المعايير تلقائيًا وتقدر تعدّل عليها.</span>
+      </div>
+      <div id="criteriaList"></div>
+      <button class="add-row" id="addCriterion">+ إضافة معيار</button>
+    </section>
+
+    <section class="card">
+      <h2>التلاميذ ونتائجهم</h2>
+      <div style="display:flex; gap:8px; margin-bottom:14px;">
+        <input type="text" id="newStudentName" placeholder="اسم ولقب التلميذ" style="flex:1">
+        <button id="addStudent">+ إضافة تلميذ</button>
+      </div>
+      <div id="studentsBlock"></div>
+    </section>
+
+    <section class="card">
+      <h2>جدول الأخطاء ومعالجتها</h2>
+      <p class="footnote" style="margin:-6px 0 12px;">اضغط "توليد تلقائيًا" ليمتلئ الجدول من نتائج التلاميذ (كل معيار لم يحقّق فيه البعض الحدّ الأدنى)، ثمّ عدّل أو أكمل الحقول كما تشاء. تقدر أيضًا تضيف أخطاء يدويًا لا علاقة لها بمعيار معيّن.</p>
+      <div style="display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+        <button id="autoGenErrors">🔄 توليد تلقائيًا من نتائج التلاميذ</button>
+        <button class="add-row" id="addErrorRow" style="width:auto;">+ إضافة خطأ يدويًا</button>
+        <button class="secondary" id="aiFillAll">✨ اقتراح الذكاء الاصطناعي للجميع</button>
+        <button class="ghost" id="apiKeyBtn" title="إعداد مفتاح OpenRouter API">⚙️ مفتاح API</button>
+      </div>
+      <p class="footnote" id="apiKeyStatus" style="margin:0 0 12px;"></p>
+      <div id="errorTableBlock"></div>
+    </section>
+
+  </div>
+
+  <div id="previewView" style="display:none;">
+    <div class="print-actions">
+      <button id="printBtn">🖨️ طباعة / حفظ PDF</button>
+      <button class="secondary" id="downloadBtn">⬇️ تنزيل نسخة للطباعة</button>
+      <span class="footnote" style="align-self:center;">إن لم تفتح نافذة الطباعة، استعمل زر التنزيل ثم افتح الملف واطبعه من متصفّحك.</span>
+    </div>
+    <div id="preview"></div>
+  </div>
+
+</div>
+
+<div class="save-banner" id="saveBanner">تم الحفظ</div>
+
+<script>
+const LEVELS = ['انعدام التملّك','دون التملّك','التملّك الأدنى','التملّك الأقصى'];
+const SYMS   = ['- - -','+ - -','+ + -','+ + +'];
+const LVLCLASS = ['lvl-0','lvl-1','lvl-2','lvl-3'];
+
+function uid(){ return Math.random().toString(36).slice(2,10); }
+
+function blankCriterion(num){
+  return { id: uid(), num, text:'', indicators:'', type:'adna' };
+}
+function blankEval(){
+  return {
+    id: uid(),
+    savedName: '',
+    meta:{ subject:'', level:'', className:'', date:'', kafaya:'', mokawwinat:'', adaa:'' },
+    criteria: [1,2,3,4,5].map(blankCriterion),
+    students: [],
+    errorRows: []
+  };
+}
+
+let state = blankEval();
+
+/* ---------- storage ---------- */
+function loadAllSaved(){
+  try{ return JSON.parse(localStorage.getItem('evalTool_saved')||'[]'); }catch(e){ return []; }
+}
+function persistAllSaved(list){
+  try{ localStorage.setItem('evalTool_saved', JSON.stringify(list)); }catch(e){}
+}
+function flashSaved(msg){
+  const b=document.getElementById('saveBanner');
+  b.textContent = msg || 'تم الحفظ';
+  b.classList.add('show');
+  setTimeout(()=>b.classList.remove('show'), 1400);
+}
+function refreshSavedDropdown(){
+  const sel = document.getElementById('savedSelect');
+  const list = loadAllSaved();
+  sel.innerHTML = '<option value="">— التقييمات المحفوظة —</option>' +
+    list.map(e=>`<option value="${e.id}">${(e.savedName||e.meta.subject||'بدون عنوان')} ${e.meta.level? '· '+e.meta.level:''}</option>`).join('');
+}
+function saveCurrent(){
+  const name = (state.meta.subject||'تقييم') + (state.meta.level? ' — '+state.meta.level:'');
+  state.savedName = name;
+  let list = loadAllSaved();
+  const idx = list.findIndex(e=>e.id===state.id);
+  if(idx>=0) list[idx]=state; else list.push(state);
+  persistAllSaved(list);
+  refreshSavedDropdown();
+  document.getElementById('savedSelect').value = state.id;
+  flashSaved('تم حفظ التقييم');
+}
+
+/* ---------- rendering: meta ---------- */
+function bindMeta(){
+  const map = { m_subject:'subject', m_level:'level', m_class:'className', m_date:'date', m_kafaya:'kafaya', m_mokawwinat:'mokawwinat', m_adaa:'adaa' };
+  Object.keys(map).forEach(id=>{
+    const el = document.getElementById(id);
+    el.value = state.meta[map[id]] || '';
+    el.oninput = ()=>{ state.meta[map[id]] = el.value; };
+  });
+}
+
+/* ---------- rendering: criteria ---------- */
+function renderCriteria(){
+  const box = document.getElementById('criteriaList');
+  box.innerHTML = '';
+  state.criteria.forEach((c, i)=>{
+    c.num = i+1;
+    const row = document.createElement('div');
+    row.className = 'crit-row';
+    row.innerHTML = `
+      <div class="crit-num">${c.num}</div>
+      <div><label>نصّ المعيار</label><textarea data-f="text" style="min-height:38px">${escapeHtml(c.text)}</textarea></div>
+      <div><label>بعض مؤشّراته (سطر لكل مؤشّر)</label><textarea data-f="indicators">${escapeHtml(c.indicators)}</textarea></div>
+      <div><label>الصنف</label>
+        <select data-f="type">
+          <option value="adna" ${c.type==='adna'?'selected':''}>معايير الحدّ الأدنى</option>
+          <option value="tamayyuz" ${c.type==='tamayyuz'?'selected':''}>معيار التميّز</option>
+        </select>
+      </div>
+      <button class="iconbtn danger" title="حذف المعيار">✕</button>
+    `;
+    row.querySelector('[data-f="text"]').oninput = e=>{ c.text = e.target.value; };
+    row.querySelector('[data-f="indicators"]').oninput = e=>{ c.indicators = e.target.value; };
+    row.querySelector('[data-f="type"]').onchange = e=>{ c.type = e.target.value; renderStudents(); };
+    row.querySelector('button').onclick = ()=>{
+      state.criteria = state.criteria.filter(x=>x.id!==c.id);
+      state.students.forEach(s=>{ delete s.results[c.id]; });
+      renderCriteria(); renderStudents();
+    };
+    box.appendChild(row);
+  });
+}
+/* ---------- ready-made subject presets (السنة الرابعة) ---------- */
+const PRESETS = {
+  'الرياضيات': [
+    { text:'التأويل الملائم', indicators:'تقديم مخطّط ملائم لحلّ وضعية\nاختيار العملية أو العمليات المناسبة للإجابة عن السؤال', type:'adna' },
+    { text:'صحّة الحساب', indicators:'إنجاز العمليات الحسابية بصفة صحيحة', type:'adna' },
+    { text:'الاستعمال الصحيح لوحدات القياس', indicators:'تحويل في أنظمة القياس المدروسة', type:'adna' },
+    { text:'استعمال خاصيات الأشكال الهندسيّة', indicators:'استعمال خاصيات الأشكال الهندسيّة في حلّ الوضعية', type:'adna' },
+    { text:'الدقّة', indicators:'اقتراح أكثر من حلّ لنفس الوضعية', type:'tamayyuz' },
+  ],
+  'الإيقاظ العلمي': [
+    { text:'تحليل الوضعية', indicators:'ضبط العلاقة بين العناصر المكوّنة للوضعية', type:'adna' },
+    { text:'تطبيق المفهوم', indicators:'تطبيق المفهوم العلمي في تحليل الوضعية', type:'adna' },
+    { text:'تعليل الإجابة', indicators:'تخيّر التمشّي الملائم للحلّ', type:'adna' },
+    { text:'إصلاح خطأ', indicators:'الإخبار عن الأعمال المنجزة\nإعادة تركيب الوضعية', type:'tamayyuz' },
+  ],
+  'القراءة': [
+    { text:'مضمون النصّ', indicators:'ضبط القرائن\nشرح مضمون النصّ', type:'adna' },
+    { text:'التصرّف في النصّ', indicators:'ضبط بنية النصّ\nاختزال/تلخيص النصّ', type:'adna' },
+    { text:'إبداء الرأي', indicators:'إبراز قضية في النصّ وإبداء الرأي فيها', type:'tamayyuz' },
+  ],
+  'الإنتاج الكتابي': [
+    { text:'الملاءمة', indicators:'ملاءمة الإنتاج للمطلوب', type:'adna' },
+    { text:'سلامة بناء النصّ', indicators:'سلامة تركيب الجمل وتسلسل الأفكار', type:'adna' },
+    { text:'المقروئية', indicators:'وضوح الخطّ وسلامة الرسم الإملائي', type:'adna' },
+    { text:'ثراء اللغة والطرافة', indicators:'تنويع المعجم وطرافة الأسلوب', type:'tamayyuz' },
+  ],
+  'قواعد اللغة': [
+    { text:'تعرّف الظاهرة اللغوية', indicators:'تعيين العناصر الأساسية في الجملة\nتسمية نوع المركّب وذكر مكوّناته\nتصريف الفعل في الصيغة المناسبة', type:'adna' },
+    { text:'توظيف الظاهرة اللغوية', indicators:'إنتاج نصّ يتضمّن الظاهرة اللغوية المدروسة بصفة سليمة', type:'tamayyuz' },
+  ],
+};
+(function initPresetSelect(){
+  const sel = document.getElementById('presetSelect');
+  Object.keys(PRESETS).forEach(k=>{
+    const o = document.createElement('option'); o.value=k; o.textContent=k; sel.appendChild(o);
+  });
+})();
+document.getElementById('loadPresetBtn').onclick = ()=>{
+  const key = document.getElementById('presetSelect').value;
+  if(!key) return;
+  if(state.criteria.some(c=>c.text.trim()) && !confirm('سيتم استبدال المعايير الحالية بقالب "'+key+'" — متابعة؟')) return;
+  state.criteria = PRESETS[key].map((c,i)=>({ id: uid(), num:i+1, text:c.text, indicators:c.indicators, type:c.type }));
+  if(!state.meta.subject) state.meta.subject = key;
+  if(!state.meta.level) state.meta.level = 'السنة الرابعة';
+  document.getElementById('m_subject').value = state.meta.subject;
+  document.getElementById('m_level').value = state.meta.level;
+  state.students.forEach(s=>{ s.results = {}; });
+  renderCriteria(); renderStudents();
+  flashSaved('تمّ تحميل قالب '+key);
+};
+
+document.getElementById('addCriterion').onclick = ()=>{
+  state.criteria.push(blankCriterion(state.criteria.length+1));
+  renderCriteria(); renderStudents();
+};
+
+/* ---------- rendering: students ---------- */
+function renderStudents(){
+  const box = document.getElementById('studentsBlock');
+  if(state.students.length===0){
+    box.innerHTML = '<div class="empty">لا يوجد تلاميذ بعد — أضف اسمًا في الأعلى.</div>';
+    return;
+  }
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  thead.innerHTML = '<tr><th>ع/ر</th><th style="text-align:right">الاسم واللقب</th>' +
+    state.criteria.map(c=>`<th>معيار ${c.num}${c.type==='tamayyuz'?' 🌟':''}</th>`).join('') +
+    '<th></th></tr>';
+  table.appendChild(thead);
+  const tbody = document.createElement('tbody');
+  state.students.forEach((s, i)=>{
+    const tr = document.createElement('tr');
+    let cells = `<td>${i+1}</td><td style="text-align:right;font-weight:700">${escapeHtml(s.name)}</td>`;
+    state.criteria.forEach(c=>{
+      const val = s.results[c.id] ?? '';
+      cells += `<td><select class="level-select ${val!==''?LVLCLASS[val]:''}" data-sid="${s.id}" data-cid="${c.id}">
+        <option value="">—</option>
+        ${LEVELS.map((l,idx)=>`<option value="${idx}" ${String(val)===String(idx)?'selected':''}>${l}</option>`).join('')}
+      </select></td>`;
+    });
+    cells += `<td><button class="iconbtn danger" data-del="${s.id}">✕</button></td>`;
+    tr.innerHTML = cells;
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  box.innerHTML = '';
+  box.appendChild(table);
+
+  box.querySelectorAll('select.level-select').forEach(sel=>{
+    sel.onchange = ()=>{
+      const sid = sel.dataset.sid, cid = sel.dataset.cid;
+      const s = state.students.find(x=>x.id===sid);
+      s.results[cid] = sel.value===''? undefined : Number(sel.value);
+      sel.className = 'level-select ' + (sel.value!==''? LVLCLASS[sel.value] : '');
+    };
+  });
+  box.querySelectorAll('[data-del]').forEach(btn=>{
+    btn.onclick = ()=>{
+      state.students = state.students.filter(s=>s.id!==btn.dataset.del);
+      renderStudents();
+    };
+  });
+}
+document.getElementById('addStudent').onclick = ()=>{
+  const inp = document.getElementById('newStudentName');
+  const name = inp.value.trim();
+  if(!name) return;
+  state.students.push({ id: uid(), name, results:{} });
+  inp.value='';
+  renderStudents();
+};
+document.getElementById('newStudentName').addEventListener('keydown', e=>{
+  if(e.key==='Enter'){ document.getElementById('addStudent').click(); }
+});
+
+/* ---------- rendering: error table ---------- */
+function blankErrorRow(){
+  return { id: uid(), criterionId:null, error:'', source:'', interpretation:'', plan:'', students:[] };
+}
+function autoGenerateErrorRows(){
+  if(!state.errorRows) state.errorRows = [];
+  state.criteria.forEach(c=>{
+    const concerned = state.students.filter(s=> s.results[c.id]!==undefined && s.results[c.id] < 2);
+    let row = state.errorRows.find(r=>r.criterionId===c.id);
+    if(concerned.length===0){
+      // remove auto row if no longer concerned and never manually filled beyond default
+      if(row){
+        state.errorRows = state.errorRows.filter(r=>r!==row);
+      }
+      return;
+    }
+    const names = concerned.length >= Math.ceil(state.students.length*0.8) && state.students.length>1
+      ? ['كافة القسم'] : concerned.map(s=>s.name);
+    if(!row){
+      row = { id: uid(), criterionId: c.id, error: `عدم تحقيق الحدّ الأدنى في معيار: ${c.text||('معيار '+c.num)}`, source:'', interpretation:'', plan:'', students:names };
+      state.errorRows.push(row);
+    } else {
+      row.students = names;
+      if(!row.error) row.error = `عدم تحقيق الحدّ الأدنى في معيار: ${c.text||('معيار '+c.num)}`;
+    }
+  });
+  renderErrorTable();
+  flashSaved('تمّ التوليد التلقائي');
+}
+function renderErrorTable(){
+  if(!state.errorRows) state.errorRows = [];
+  const box = document.getElementById('errorTableBlock');
+  if(state.errorRows.length===0){
+    box.innerHTML = '<div class="empty">لا توجد أخطاء مسجّلة بعد.</div>';
+    return;
+  }
+  const table = document.createElement('table');
+  table.innerHTML = `<thead><tr>
+    <th style="width:22%">الخطأ</th><th style="width:20%">مصدره</th><th style="width:20%">تأويله</th><th style="width:24%">خطّة علاجه</th><th></th>
+  </tr></thead>`;
+  const tbody = document.createElement('tbody');
+  state.errorRows.forEach(r=>{
+    const tr = document.createElement('tr');
+    const studentsNote = (r.students&&r.students.length) ? `<div class="footnote" style="text-align:right;margin-top:4px;">👤 ${escapeHtml(r.students.join('، '))}</div>` : '';
+    tr.innerHTML = `
+      <td><textarea data-f="error">${escapeHtml(r.error)}</textarea>${studentsNote}</td>
+      <td><textarea data-f="source" placeholder="اضغط ✨ للاقتراح">${escapeHtml(r.source)}</textarea></td>
+      <td><textarea data-f="interpretation" placeholder="اضغط ✨ للاقتراح">${escapeHtml(r.interpretation)}</textarea></td>
+      <td><textarea data-f="plan" placeholder="اضغط ✨ للاقتراح">${escapeHtml(r.plan)}</textarea></td>
+      <td style="white-space:nowrap;">
+        <button class="iconbtn ghost ai-row-btn" title="اقتراح بالذكاء الاصطناعي">✨</button>
+        <button class="iconbtn danger del-row-btn" title="حذف">✕</button>
+      </td>
+    `;
+    ['error','source','interpretation','plan'].forEach(f=>{
+      tr.querySelector(`[data-f="${f}"]`).oninput = e=>{ r[f] = e.target.value; };
+    });
+    tr.querySelector('.del-row-btn').onclick = ()=>{
+      state.errorRows = state.errorRows.filter(x=>x.id!==r.id);
+      renderErrorTable();
+    };
+    tr.querySelector('.ai-row-btn').onclick = ()=>aiFillRow(r);
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  box.innerHTML = '';
+  box.appendChild(table);
+}
+/* ---------- AI suggestions: sample capability (claude.ai) → shared worker → user's own API key ---------- */
+document.getElementById('addErrorRow').onclick = ()=>{
+  if(!state.errorRows) state.errorRows = [];
+  state.errorRows.push(blankErrorRow());
+  renderErrorTable();
+};
+document.getElementById('autoGenErrors').onclick = autoGenerateErrorRows;
+
+// إذا نشرت الخادم الوسيط (ai-proxy-worker.js)، ضع رابطه هنا فيعمل زرّ ✨ عند الجميع دون أي إعداد
+const DEFAULT_WORKER_URL = 'https://takiim.abdelbakinajjar29.workers.dev/';
+
+let sampleAPI = null;
+let sampleReady = false;
+(async function initSample(){
+  try{
+    if(window.claude && window.claude.use){
+      sampleAPI = await window.claude.use('sample');
+    }
+  }catch(e){ sampleAPI = null; }
+  sampleReady = true;
+  refreshApiKeyStatus();
+})();
+
+const API_KEY_STORAGE = 'evalTool_openrouterApiKey';
+function getApiKey(){ try{ return localStorage.getItem(API_KEY_STORAGE) || ''; }catch(e){ return ''; } }
+function setApiKey(k){ try{ if(k) localStorage.setItem(API_KEY_STORAGE, k); else localStorage.removeItem(API_KEY_STORAGE); }catch(e){} }
+
+function refreshApiKeyStatus(){
+  const el = document.getElementById('apiKeyStatus');
+  if(!el) return;
+  if(sampleAPI){
+    el.textContent = 'الاقتراح بالذكاء الاصطناعي مفعّل تلقائيًا (تفتح الأداة عبر claude.ai).';
+  } else if(DEFAULT_WORKER_URL){
+    el.textContent = 'الاقتراح بالذكاء الاصطناعي مفعّل تلقائيًا عبر الخادم المشترك — لا حاجة لأي إعداد.';
+  } else if(getApiKey()){
+    el.textContent = 'الاقتراح بالذكاء الاصطناعي مفعّل بمفتاح OpenRouter الخاص بك (محفوظ في هذا المتصفّح فقط).';
+  } else {
+    el.textContent = 'لتفعيل زرّ ✨ خارج claude.ai، اضغط "⚙️ مفتاح API" وأدخل مفتاح OpenRouter الخاص بك.';
+  }
+}
+document.getElementById('apiKeyBtn').onclick = ()=>{
+  const cur = getApiKey();
+  const val = window.prompt(
+    'أدخل مفتاح OpenRouter API الخاص بك (تحصل عليه مجّانًا من openrouter.ai/keys، بدون بطاقة بنكية).\n' +
+    'يُحفظ في متصفّحك أنت فقط ولا يُرسَل لأي جهة سوى OpenRouter مباشرة عند الاستعمال.\n' +
+    'اترك الحقل فارغًا واضغط موافق لحذف المفتاح المحفوظ حاليًا.',
+    cur
+  );
+  if(val === null) return;
+  setApiKey(val.trim());
+  refreshApiKeyStatus();
+  flashSaved(val.trim() ? 'تمّ حفظ المفتاح' : 'تمّ حذف المفتاح');
+};
+
+function buildAiPrompt(row){
+  const c = state.criteria.find(x=>x.id===row.criterionId);
+  return `أنت مستشار بيداغوجي خبير في التعليم الابتدائي بتونس. بناءً على المعطيات التالية، اقترح تحليلاً بيداغوجيًا مختصرًا.
+المادة: ${state.meta.subject||'غير محدّدة'}
+المستوى: ${state.meta.level||'غير محدّد'}
+المعيار المعني: ${c? c.text : 'غير محدّد'}
+وصف الخطأ: ${row.error||'غير محدّد'}
+عدد/أسماء التلاميذ المعنيين: ${row.students&&row.students.length? row.students.join('، ') : 'غير محدّد'}
+
+أجب فقط بكائن JSON صالح (بدون أي نص أو شرح خارج JSON، وبدون علامات markdown) بالمفاتيح التالية بالعربية الفصحى وبإيجاز (جملة إلى جملتين لكل مفتاح):
+{"source": "مصدر الخطأ المحتمل", "interpretation": "تأويل بيداغوجي لسبب وقوع الخطأ", "plan": "خطّة علاج عملية يطبّقها المعلّم في القسم"}`;
+}
+
+async function callAI(prompt){
+  // 1) inside claude.ai: use the built-in sample capability, no key needed
+  if(!sampleReady){ await new Promise(r=>setTimeout(r, 400)); }
+  if(sampleAPI){
+    try{
+      const result = await sampleAPI.json(prompt);
+      if(result) return result;
+    }catch(e){ /* fall through */ }
+  }
+  // 2) shared worker (if configured): zero setup for any user
+  if(DEFAULT_WORKER_URL){
+    try{
+      const resp = await fetch(DEFAULT_WORKER_URL, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ prompt })
+      });
+      const data = await resp.json();
+      if(!resp.ok || data.error) throw new Error(data.error || ('HTTP '+resp.status));
+      const clean = (data.text||'').replace(/```json|```/g,'').trim();
+      return JSON.parse(clean);
+    }catch(e){
+      console.error('worker error', e);
+      // fall through to personal API key path
+    }
+  }
+  // 3) standalone fallback: the user's own OpenRouter API key (no credit card needed), called directly from the browser
+  const key = getApiKey();
+  if(!key){
+    if(confirm('لتفعيل الاقتراح بالذكاء الاصطناعي خارج claude.ai، تحتاج مفتاح OpenRouter API خاصًّا بك (مجّاني، بدون بطاقة بنكية، عبر openrouter.ai/keys). هل تريد إدخاله الآن؟')){
+      document.getElementById('apiKeyBtn').click();
+    }
+    return null;
+  }
+  const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization': 'Bearer ' + key
+    },
+    body: JSON.stringify({
+      model:'openrouter/free',
+      messages:[{ role:'user', content: prompt }]
+    })
+  });
+  if(!resp.ok){
+    const errBody = await resp.text().catch(()=> '');
+    throw new Error('HTTP '+resp.status+' — '+errBody.slice(0,200));
+  }
+  const data = await resp.json();
+  const text = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+  const clean = text.replace(/```json|```/g,'').trim();
+  return JSON.parse(clean);
+}
+
+async function aiFillRow(row, silent){
+  try{
+    const result = await callAI(buildAiPrompt(row));
+    if(result){
+      row.source = result.source || row.source;
+      row.interpretation = result.interpretation || row.interpretation;
+      row.plan = result.plan || row.plan;
+      renderErrorTable();
+    }
+    return !!result;
+  }catch(e){
+    console.error(e);
+    if(!silent) alert('تعذّر توليد الاقتراح: '+e.message+'\nتحقّق من صحّة مفتاح API أو اتصالك بالإنترنت.');
+    return false;
+  }
+}
+
+document.getElementById('aiFillAll').onclick = async ()=>{
+  if(!state.errorRows || state.errorRows.length===0){ alert('لا توجد صفوف بعد في جدول الأخطاء.'); return; }
+  const btn = document.getElementById('aiFillAll');
+  btn.disabled = true; const orig = btn.textContent; btn.textContent = '⏳ جارٍ التوليد...';
+  for(const row of state.errorRows){
+    const ok = await aiFillRow(row, true);
+    if(!ok && !sampleAPI && !getApiKey()) break; // user declined to add a key — stop the loop
+  }
+  btn.disabled = false; btn.textContent = orig;
+  flashSaved('انتهى التوليد');
+};
+
+/* ---------- preview generation ---------- */
+function escapeHtml(str){
+  return (str||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function linesToList(text){
+  const lines = (text||'').split('\n').map(l=>l.trim()).filter(Boolean);
+  if(lines.length===0) return '';
+  return '<ul>' + lines.map(l=>`<li>${escapeHtml(l)}</li>`).join('') + '</ul>';
+}
+
+function buildPreview(){
+  const m = state.meta;
+  const adna = state.criteria.filter(c=>c.type==='adna');
+  const tamayyuz = state.criteria.filter(c=>c.type==='tamayyuz');
+
+  let html = `<h1>تقييم مكتسبات التلاميذ في مادة ${escapeHtml(m.subject||'—')}</h1>`;
+  html += `<div class="meta-line"><b>المستوى:</b> ${escapeHtml(m.level||'—')} &nbsp; <b>القسم:</b> ${escapeHtml(m.className||'—')} &nbsp; <b>التاريخ:</b> ${escapeHtml(m.date||'—')}</div>`;
+  if(m.kafaya) html += `<div class="meta-line"><b>الكفاية المستهدفة:</b> ${escapeHtml(m.kafaya)}</div>`;
+  if(m.mokawwinat) html += `<div class="meta-line"><b>مكوّنات الكفاية:</b>${linesToList(m.mokawwinat)}</div>`;
+  if(m.adaa) html += `<div class="meta-line"><b>الأداء المنتظر:</b>${linesToList(m.adaa)}</div>`;
+
+  // المعايير table
+  html += `<h3>المعايير</h3><table><thead><tr><th>المعيار</th><th>نصّ المعيار</th><th>بعض مؤشّراته</th></tr></thead><tbody>`;
+  state.criteria.forEach(c=>{
+    html += `<tr><td>${c.num}${c.type==='tamayyuz'?' 🌟':''}</td><td style="text-align:right">${escapeHtml(c.text)}</td><td style="text-align:right">${linesToList(c.indicators)}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+
+  // جدول إسناد الأعداد
+  html += `<h3>جدول إسناد الأعداد</h3><table><thead><tr><th>المستويات</th>` +
+    state.criteria.map(c=>`<th>معيار ${c.num}</th>`).join('') + `</tr></thead><tbody>`;
+  LEVELS.forEach((lvl, li)=>{
+    html += `<tr><td style="text-align:right">${lvl}</td>` +
+      state.criteria.map(c=>{
+        const count = state.students.filter(s=>s.results[c.id]===li).length;
+        return `<td>${count||''}</td>`;
+      }).join('') + `</tr>`;
+  });
+  html += `<tr><td style="text-align:right;font-weight:700">عدد المحقّقين للحدّ الأدنى</td>` +
+    state.criteria.map(c=>{
+      const count = state.students.filter(s=>s.results[c.id]!==undefined && s.results[c.id]>=2).length;
+      return `<td style="font-weight:700">${count}</td>`;
+    }).join('') + `</tr>`;
+  html += `</tbody></table>`;
+
+  // الجدول الجامع للنتائج
+  html += `<h3>الجدول الجامع للنتائج</h3><table><thead><tr><th>ع/ر</th><th style="text-align:right">الاسم واللقب</th>`;
+  adna.forEach(c=>html += `<th>معيار ${c.num}</th>`);
+  tamayyuz.forEach(c=>html += `<th>مع التميّز<br>معيار ${c.num}</th>`);
+  html += `</tr></thead><tbody>`;
+  state.students.forEach((s,i)=>{
+    html += `<tr><td>${i+1}</td><td class="name-cell">${escapeHtml(s.name)}</td>`;
+    adna.forEach(c=>{
+      const v = s.results[c.id];
+      html += `<td class="sym">${v!==undefined? SYMS[v] : '—'}</td>`;
+    });
+    tamayyuz.forEach(c=>{
+      const v = s.results[c.id];
+      html += `<td class="sym">${v!==undefined? SYMS[v] : '—'}</td>`;
+    });
+    html += `</tr>`;
+  });
+  html += `<tr><td colspan="2" style="text-align:right;font-weight:700">عدد المحقّقين للحدّ الأدنى</td>`;
+  adna.forEach(c=>{
+    const count = state.students.filter(s=>s.results[c.id]!==undefined && s.results[c.id]>=2).length;
+    html += `<td style="font-weight:700">${count}</td>`;
+  });
+  tamayyuz.forEach(c=>{
+    const count = state.students.filter(s=>s.results[c.id]===3).length;
+    html += `<td style="font-weight:700">${count}</td>`;
+  });
+  html += `</tr></tbody></table>`;
+
+  // جدول الأخطاء ومعالجتها (auto-generated + manual, editable in the input tab)
+
+  if(state.errorRows && state.errorRows.length){
+    const filled = state.errorRows.filter(r=>r.error||r.source||r.interpretation||r.plan);
+    if(filled.length){
+      html += `<h3>جدول الأخطاء ومعالجتها</h3><table><thead><tr>
+        <th>الخطأ</th><th>مصدره</th><th>تأويله</th><th>خطّة علاجه</th><th>التلاميذ المعنيون</th>
+      </tr></thead><tbody>`;
+      filled.forEach(r=>{
+        html += `<tr>
+          <td style="text-align:right">${escapeHtml(r.error)||'—'}</td>
+          <td style="text-align:right">${escapeHtml(r.source)||'—'}</td>
+          <td style="text-align:right">${escapeHtml(r.interpretation)||'—'}</td>
+          <td style="text-align:right">${escapeHtml(r.plan)||'—'}</td>
+          <td class="concern-list">${r.students&&r.students.length? escapeHtml(r.students.join('، ')) : '—'}</td>
+        </tr>`;
+      });
+      html += `</tbody></table>`;
+    }
+  }
+
+  document.getElementById('preview').innerHTML = html;
+}
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.onclick = ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    const which = tab.dataset.tab;
+    document.getElementById('editView').style.display = which==='edit' ? 'block':'none';
+    document.getElementById('previewView').style.display = which==='preview' ? 'block':'none';
+    if(which==='preview') buildPreview();
+  };
+});
+document.getElementById('printBtn').onclick = ()=>{ openPrintWindow(); };
+document.getElementById('downloadBtn').onclick = ()=>{ triggerDownload(); };
+
+function standalonePrintableHtml(){
+  const content = document.getElementById('preview').innerHTML;
+  const styles = `<style>
+    body{font-family:'Tajawal',system-ui,sans-serif;direction:rtl;padding:28px;color:#1a1a1a;background:#fff;}
+    h1{text-align:center;color:#5f2016;font-size:1.4rem;}
+    h3{color:#b5551f;margin:26px 0 10px;text-align:center;}
+    table{width:100%;border-collapse:collapse;font-size:.85rem;margin-bottom:14px;}
+    th,td{border:1px solid #999;padding:7px;text-align:center;vertical-align:top;}
+    th{background:#eee0c6;}
+    .sym{font-family:monospace;letter-spacing:2px;}
+    .name-cell{font-weight:700;text-align:right;}
+    .concern-list{font-size:.8rem;text-align:right;}
+    ul{margin:4px 0;padding-inline-start:18px;}
+    .meta-line{margin:4px 0;font-size:.95rem;}
+    .meta-line b{color:#5f2016;}
+    @media print{ body{padding:0;} }
+  </style>`;
+  return `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>ملف التقييم</title>${styles}</head><body>${content}</body></html>`;
+}
+
+function openPrintWindow(){
+  buildPreview();
+  const fullHtml = standalonePrintableHtml();
+  let win = null;
+  try{ win = window.open('', '_blank'); }catch(e){ win = null; }
+  if(win){
+    win.document.open();
+    win.document.write(fullHtml);
+    win.document.close();
+    setTimeout(()=>{ try{ win.focus(); win.print(); }catch(e){} }, 350);
+  } else {
+    triggerDownload(fullHtml);
+    alert('تعذّر فتح نافذة جديدة (ربما بسبب حاجب النوافذ المنبثقة). نزّلنا لك نسخة HTML بدلاً من ذلك — افتحها من جهازك واطبعها.');
+  }
+}
+
+let downloadsAPI = null, downloadsReady = false;
+(async function initDownloads(){
+  try{
+    if(window.claude && window.claude.use){ downloadsAPI = await window.claude.use('downloads'); }
+  }catch(e){ downloadsAPI = null; }
+  downloadsReady = true;
+})();
+
+async function triggerDownload(prebuiltHtml){
+  buildPreview();
+  const html = prebuiltHtml || standalonePrintableHtml();
+  if(!downloadsReady){ await new Promise(r=>setTimeout(r,400)); }
+  if(downloadsAPI){
+    try{
+      await downloadsAPI.save({ filename: (state.meta.subject||'تقييم')+'.html', data: html });
+      return;
+    }catch(e){ /* fall through to blob fallback */ }
+  }
+  try{
+    const blob = new Blob([html], {type:'text/html'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = (state.meta.subject||'تقييم')+'.html';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  }catch(e){
+    alert('تعذّر تنزيل الملف في هذا العارض. جرّب فتح الأداة في نافذة متصفّح كاملة عبر رابط النشر.');
+  }
+}
+
+/* ---------- top toolbar ---------- */
+document.getElementById('newBtn').onclick = ()=>{
+  if(!confirm('بدء تقييم جديد؟ التعديلات غير المحفوظة ستُفقد.')) return;
+  state = blankEval();
+  renderAll();
+};
+document.getElementById('loadBtn').onclick = ()=>{
+  const id = document.getElementById('savedSelect').value;
+  if(!id) return;
+  const found = loadAllSaved().find(e=>e.id===id);
+  if(found){ state = JSON.parse(JSON.stringify(found)); renderAll(); flashSaved('تم فتح التقييم'); }
+};
+document.getElementById('deleteBtn').onclick = ()=>{
+  const id = document.getElementById('savedSelect').value;
+  if(!id) return;
+  if(!confirm('حذف هذا التقييم المحفوظ نهائيًا؟')) return;
+  persistAllSaved(loadAllSaved().filter(e=>e.id!==id));
+  refreshSavedDropdown();
+  flashSaved('تم الحذف');
+};
+
+/* autosave every change (debounced) into a floating save button behavior: manual save via ctrl+s or button */
+window.addEventListener('keydown', e=>{
+  if((e.ctrlKey||e.metaKey) && e.key==='s'){ e.preventDefault(); saveCurrent(); }
+});
+
+/* add an explicit save button next to toolbar */
+(function addSaveButton(){
+  const btn = document.createElement('button');
+  btn.textContent = '💾 حفظ';
+  btn.onclick = saveCurrent;
+  document.querySelector('.toolbar').insertBefore(btn, document.getElementById('savedSelect'));
+})();
+
+function renderAll(){
+  bindMeta();
+  renderCriteria();
+  renderStudents();
+  renderErrorTable();
+  refreshSavedDropdown();
+  refreshApiKeyStatus();
+}
+renderAll();
+</script>
+</body>
+</html>
